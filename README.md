@@ -1,2 +1,2 @@
 # GAMECUS
-GameCus Web
+GameCus Download
