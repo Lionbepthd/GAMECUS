@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Ular Tangga</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; margin: 0; }
+    h1 { font-size: 36px; margin-top: 20px; }
+    input, button {
+      font-size: 24px;
+      padding: 15px;
+      margin: 10px 0;
+      width: 90%;
+      max-width: 400px;
+    }
+    canvas {
+      border: 2px solid black;
+      margin-top: 20px;
+    }
+    #gameArea, #loading, #recordArea { display: none; }
+    #menuButton {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 32px;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+    #menuPopup {
+      display: none;
+      position: absolute;
+      top: 40px;
+      right: 10px;
+      background: white;
+      border: 1px solid black;
+      padding: 10px;
+      text-align: left;
+    }
+    #menuPopup button {
+      width: 100%;
+      font-size: 10px;
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Ular Tangga - 4 Pemain</h1>
+  <div id="nameInputArea">
+    <h2>Masukkan Nama Pemain</h2>
+    <form id="namesForm">
+      <input type="text" id="player1" placeholder="Nama Pemain 1" required><br>
+      <input type="text" id="player2" placeholder="Nama Pemain 2" required><br>
+      <input type="text" id="player3" placeholder="Nama Pemain 3" required><br>
+      <input type="text" id="player4" placeholder="Nama Pemain 4" required><br>
+      <button type="submit">Mulai Game</button><br>
+    </form>
+  </div>
+
+  <div id="loading">Loading game...</div>
+
+  <div id="gameArea">
+    <button id="menuButton" onclick="toggleMenu()">☰</button>
+    <div id="menuPopup">
+      <button onclick="location.href='index.html'">↩️ Keluar</button>
+      <button onclick="startNewGame()">🆕 Buat Baru</button>
+    </div>
+    <canvas id="board" width="300" height="300"></canvas>
+    <p>Giliran: <span id="turn"></span></p>
+    <p>Posisi: <span id="positions"></span></p>
+    <p>Skor: <span id="scores"></span></p>
+    <button onclick="rollDice()" style="font-size: 16px; padding: 20px;">🎲 Roll Dadu</button>
+    <p id="diceResult"></p>
+    <div id="recordArea"></div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('board');
+    const ctx = canvas.getContext('2d');
+    const boardSize = 10;
+    const cellSize = canvas.width / boardSize;
+    const colors = ['red', 'blue', 'green', 'purple'];
+
+    let positions = [1, 1, 1, 1];
+    let scores = [0, 0, 0, 0];
+    let currentPlayer = 0;
+    let playerNames = [];
+    let moving = false;
+
+    const snakes = {16:6, 48:30, 62:19, 88:24, 95:56, 97:78};
+    const ladders = {2:38, 7:14, 8:31, 15:26, 28:84, 36:44, 51:67, 71:91, 78:98};
+
+    document.getElementById('namesForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      playerNames = [
+        document.getElementById('player1').value,
+        document.getElementById('player2').value,
+        document.getElementById('player3').value,
+        document.getElementById('player4').value
+      ];
+      if (playerNames.some(name => name.trim() === "")) {
+        alert("Isi semua nama.");
+        return;
+      }
+      document.getElementById('nameInputArea').style.display = 'none';
+      showLoading(() => {
+        positions = [1, 1, 1, 1];
+        scores = [0, 0, 0, 0];
+        currentPlayer = 0;
+        drawBoard();
+        updateUI();
+      });
+    });
+
+    function showLoading(callback) {
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('gameArea').style.display = 'none';
+      setTimeout(() => {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('gameArea').style.display = 'block';
+        callback();
+      }, 1000);
+    }
+
+    function drawBoard() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.font = "12px sans-serif";
+      for (let i = 0; i < boardSize; i++) {
+        for (let j = 0; j < boardSize; j++) {
+          const x = j * cellSize;
+          const y = i * cellSize;
+          ctx.strokeRect(x, y, cellSize, cellSize);
+          const num = getCellNumber(i, j);
+          ctx.fillText(num, x + 4, y + 12);
+        }
+      }
+      drawSnakesAndLadders();
+      drawPlayers();
+    }
+
+    function getCellNumber(row, col) {
+      let r = boardSize - 1 - row;
+      return r * boardSize + (r % 2 === 0 ? col + 1 : boardSize - col);
+    }
+
+    function getCoordinates(pos) {
+      let r = Math.floor((pos - 1) / boardSize);
+      let c = (r % 2 === 0) ? (pos - 1) % boardSize : boardSize - 1 - (pos - 1) % boardSize;
+      return {
+        x: c * cellSize + cellSize / 2,
+        y: (boardSize - 1 - r) * cellSize + cellSize / 2
+      };
+    }
+
+    function drawArrow(from, to, color) {
+      const headlen = 10;
+      const dx = to.x - from.x;
+      const dy = to.y - from.y;
+      const angle = Math.atan2(dy, dx);
+      ctx.strokeStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(to.x, to.y);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(to.x, to.y);
+      ctx.lineTo(to.x - headlen * Math.cos(angle - Math.PI/6), to.y - headlen * Math.sin(angle - Math.PI/6));
+      ctx.lineTo(to.x - headlen * Math.cos(angle + Math.PI/6), to.y - headlen * Math.sin(angle + Math.PI/6));
+      ctx.lineTo(to.x, to.y);
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
+
+    function drawSnakesAndLadders() {
+      for (let s in snakes) {
+        drawArrow(getCoordinates(Number(s)), getCoordinates(snakes[s]), "brown");
+      }
+      for (let l in ladders) {
+        drawArrow(getCoordinates(Number(l)), getCoordinates(ladders[l]), "green");
+      }
+    }
+
+    function drawPlayers() {
+      for (let i = 0; i < 4; i++) {
+        const offsetX = (i % 2) * 10 - 5;
+        const offsetY = Math.floor(i / 2) * 10 - 5;
+        const { x, y } = getCoordinates(positions[i]);
+        ctx.beginPath();
+        ctx.arc(x + offsetX, y + offsetY, 10, 0, Math.PI * 2);
+        ctx.fillStyle = colors[i];
+        ctx.fill();
+      }
+    }
+
+    function rollDice() {
+      if (moving) return;
+      document.getElementById("diceResult").textContent = "Mengocok dadu...";
+      setTimeout(() => {
+        let dice = Math.floor(Math.random() * 6) + 1;
+        document.getElementById("diceResult").textContent = `Dadu: ${dice}`;
+        animateMove(positions[currentPlayer], positions[currentPlayer] + dice, dice);
+      }, 2000);
+    }
+
+    function animateMove(start, end, steps) {
+      moving = true;
+      let step = 0;
+      const interval = setInterval(() => {
+        if (step >= steps) {
+          clearInterval(interval);
+          if (snakes[positions[currentPlayer]]) {
+            alert(`${playerNames[currentPlayer]} kena ular!`);
+            positions[currentPlayer] = snakes[positions[currentPlayer]];
+          } else if (ladders[positions[currentPlayer]]) {
+            alert(`${playerNames[currentPlayer]} naik tangga!`);
+            positions[currentPlayer] = ladders[positions[currentPlayer]];
+          }
+          if (positions[currentPlayer] >= 100) {
+            alert(`${playerNames[currentPlayer]} menang!`);
+            scores[currentPlayer]++;
+            saveRecord(playerNames[currentPlayer]);
+            positions = [1, 1, 1, 1];
+          }
+          currentPlayer = (currentPlayer + 1) % 4;
+          updateUI();
+          drawBoard();
+          moving = false;
+        } else {
+          positions[currentPlayer]++;
+          drawBoard();
+          step++;
+        }
+      }, 400);
+    }
+
+    function updateUI() {
+      document.getElementById("turn").textContent = `${playerNames[currentPlayer]}`;
+      document.getElementById("positions").textContent = positions.join(', ');
+      document.getElementById("scores").textContent = scores.join(', ');
+    }
+
+    function saveGame() {
+      const data = { positions, scores, currentPlayer, playerNames, timestamp: new Date().toISOString() };
+      localStorage.setItem("snakeGameSave", JSON.stringify(data));
+      alert("Game disimpan.");
+    }
+
+    function loadGame() {
+      const data = localStorage.getItem("snakeGameSave");
+      if (!data) return alert("Tidak ada game tersimpan.");
+      const save = JSON.parse(data);
+      positions = save.positions;
+      scores = save.scores;
+      currentPlayer = save.currentPlayer;
+      playerNames = save.playerNames;
+      document.getElementById('nameInputArea').style.display = 'none';
+      showLoading(() => {
+        drawBoard();
+        updateUI();
+      });
+    }
+
+    function saveRecord(winner) {
+      let records = JSON.parse(localStorage.getItem("snakeGameRecord") || "[]");
+      records.push({ winner, date: new Date().toLocaleString() });
+      localStorage.setItem("snakeGameRecord", JSON.stringify(records));
+    }
+
+    function toggleMenu() {
+      const menu = document.getElementById("menuPopup");
+      menu.style.display = menu.style.display === "none" ? "block" : "none";
+    }
+
+    function exitToMenu() {
+      if (confirm("Keluar dari game? Semua progres yang belum disimpan akan hilang.")) {
+        document.getElementById("gameArea").style.display = "none";
+        document.getElementById("nameInputArea").style.display = "block";
+        document.getElementById("menuPopup").style.display = "none";
+      }
+    }
+
+    function startNewGame() {
+      if (confirm("Mulai game baru? Semua data akan direset.")) {
+        localStorage.removeItem("snakeGameSave");
+        positions = [1, 1, 1, 1];
+        scores = [0, 0, 0, 0];
+        currentPlayer = 0;
+        document.getElementById("menuPopup").style.display = "none";
+        drawBoard();
+        updateUI();
+      }
+    }
+  </script>
+</body>
+</html>

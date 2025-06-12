@@ -1,0 +1,308 @@
+<!DOCTYPE html>  <html>  
+<head>  
+  <title>Pac-Man Game</title>  
+  <button onclick="location.href='index.html'" style="
+  position: fixed;
+  bottom: 10px;
+  left: 10px;
+  z-index: 1000;
+  padding: 10px;
+  font-size: 16px;
+">Back to Menu</button>
+</head> 
+<body style="background:#000;color:#fff;font-family:sans-serif;text-align:center">  
+  <h1>Pac-Man</h1> 
+  <style>
+  #loadingScreen {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2em;
+    z-index: 9999;
+  }
+  #mainContent {
+    display: none;
+  }
+</style>
+<div id="loadingScreen">Loading...</div>
+
+<div id="mainContent">
+  <!-- Konten utama game kamu di sini -->
+</div>
+  <div>  
+    Map:  
+    <select id="mapSelect">  
+      <option value="0">Map 1</option>  
+      <option value="1">Map 2</option>  
+      <option value="2">Map 3</option>
+      <option value="3">Map 4</option>  
+      <option value="4">Map 5</option>  
+      <option value="5">Map 6</option>
+      <option value="6">Map 7</option>  
+      <option value="7">Map 8</option>  
+      <option value="8">Map 9</option>
+      <option value="9">Map 10</option>
+    </select>  
+  </div>  
+  <div>Score: <span id="score">0</span> | Lives: <span id="lives">1</span></div>  
+  <canvas id="gameCanvas" width="320" height="256" style="margin-top:10px;border:2px solid #fff;"></canvas>  
+<div style="margin-top:20px;">  
+  <div style="display:inline-block;">  
+    <button onclick="setDir(0,-1)" style="width:60px;height:60px;font-size:30px">⬆️</button><br>  
+    <button onclick="setDir(-1,0)" style="width:60px;height:60px;font-size:30px">⬅️</button>  
+    <button onclick="setDir(1,0)" style="width:60px;height:60px;font-size:30px">➡️</button><br>  
+    <button onclick="setDir(0,1)" style="width:60px;height:60px;font-size:30px">⬇️</button>  
+  </div>  
+</div> 
+<h2 id="gameOverText" style="color:red; display:none;">Game Over</h2>
+<script>  
+  setTimeout(function() {
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('mainContent').style.display = 'block';
+  }, 2000);
+function setDir(x, y) {  
+  direction = { x, y };  
+}  
+const tileSize = 32;  
+const canvas = document.getElementById("gameCanvas");  
+const ctx = canvas.getContext("2d");  
+  
+let pacman = { x: 0, y: 0 };  
+let direction = { x: 0, y: 0 };  
+let score = 0;
+let lives = 3;
+let currentMap = 0;  
+let ghostList = [];  
+  
+const mapList = [  
+    [  
+  [1,1,1,1,1,1,1,1,1,1],  
+  [1,3,0,0,0,0,0,0,0,1],  
+  [1,0,1,1,1,1,1,1,0,1],  
+  [1,0,1,2,2,2,2,1,0,1],  
+  [1,0,1,2,1,1,2,1,0,1],  
+  [1,0,1,2,2,2,2,1,0,1],  
+  [1,0,0,0,0,0,0,0,4,1],  
+  [1,1,1,1,1,1,1,1,1,1]  
+],
+[
+  [1,1,1,1,1,1,1,1,1,1],
+  [1,0,0,0,0,0,0,0,0,1],
+  [1,0,1,1,1,1,1,1,0,1],
+  [1,0,1,2,2,2,2,1,0,1],
+  [1,0,1,2,1,1,1,1,0,1],
+  [1,0,1,2,2,2,2,1,0,1],
+  [1,3,0,0,0,0,0,4,0,1],
+  [1,1,1,1,1,1,1,1,1,1]
+],
+[
+  [1,1,1,1,1,1,1,1,1,1],
+  [1,0,0,2,2,2,2,0,0,1],
+  [1,0,0,1,1,1,1,0,0,1],
+  [1,0,0,1,1,1,1,0,0,1],
+  [1,0,3,1,1,0,2,0,0,1],
+  [1,0,0,1,0,0,1,0,0,1],
+  [1,0,0,2,2,2,1,0,4,1],
+  [1,1,1,1,1,1,1,1,1,1]
+],
+[
+  [1,1,1,1,1,1,1,1,1,1],
+  [1,0,0,0,0,0,0,0,3,1],
+  [1,0,1,1,1,1,1,1,0,1],
+  [1,0,1,2,2,2,2,1,0,1],
+  [1,0,1,4,2,0,1,1,1,1],
+  [1,0,1,2,2,2,2,1,0,1],
+  [1,0,0,0,0,0,0,0,0,1],
+  [1,1,1,1,1,1,1,1,1,1]
+],
+[
+  [1,1,1,1,1,1,1,1,1,1],
+  [1,4,0,0,0,0,0,0,0,1],
+  [1,0,1,1,1,1,1,1,0,1],
+  [1,0,0,0,0,0,0,1,0,1],
+  [1,0,1,1,1,1,1,1,3,1],
+  [1,0,0,0,0,0,0,0,0,1],
+  [1,0,1,1,1,1,1,1,0,1],
+  [1,1,1,1,1,1,1,1,1,1]
+],
+[
+  [1,1,1,1,1,1,1,1,1,1],
+  [1,0,0,0,1,0,0,0,0,1],
+  [1,0,1,0,1,0,1,1,0,1],
+  [1,0,1,0,0,0,1,0,0,1],
+  [1,0,1,1,1,1,1,0,1,1],
+  [1,3,0,0,0,0,0,0,4,1],
+  [1,0,1,1,1,1,1,1,1,1],
+  [1,1,1,1,1,1,1,1,1,1]
+],
+[
+  [1,1,1,1,1,1,1,1,1,1],
+  [1,3,0,0,0,0,0,0,4,1],
+  [1,0,1,1,1,1,1,1,1,1],
+  [1,0,1,2,2,2,0,1,1,1],
+  [1,0,1,2,1,1,1,0,0,1],
+  [1,0,0,0,1,0,0,0,0,1],
+  [1,1,1,1,1,1,1,1,1,1],
+  [1,1,1,1,1,1,1,1,1,1]
+],
+[
+  [1,1,1,1,1,1,1,1,1,1],
+  [1,0,0,0,0,0,0,0,0,1],
+  [1,0,1,1,1,1,1,1,0,1],
+  [1,0,1,2,2,2,2,1,0,1],
+  [1,0,1,2,4,0,1,1,0,1],
+  [1,0,1,2,2,2,2,1,0,1],
+  [1,3,0,0,0,0,0,4,0,1],
+  [1,1,1,1,1,1,1,1,1,1]
+],
+[
+  [1,1,1,1,1,1,1,1,1,1],
+  [1,0,0,0,3,0,0,0,0,1],
+  [1,0,1,1,1,1,1,1,0,1],
+  [1,0,0,0,0,0,0,0,0,1],
+  [1,0,1,1,1,1,1,1,0,1],
+  [1,0,0,0,4,4,0,0,0,1],
+  [1,0,1,1,1,1,1,1,0,1],
+  [1,1,1,1,1,1,1,1,1,1]
+],
+[
+  [1,1,1,1,1,1,1,1,1,1],
+  [1,4,0,0,0,0,0,0,0,1],
+  [1,0,1,1,1,1,1,1,0,1],
+  [1,0,1,2,2,2,2,1,0,1],
+  [1,0,1,4,0,0,1,1,0,1],
+  [1,0,1,2,2,2,2,1,0,1],
+  [1,0,0,0,0,0,0,0,3,1],
+  [1,1,1,1,1,1,1,1,1,1]
+]
+];  
+  
+let map = JSON.parse(JSON.stringify(mapList[currentMap]));  
+  
+function findEntities() {  
+  ghostList = [];  
+  for (let y = 0; y < map.length; y++) {  
+    for (let x = 0; x < map[0].length; x++) {  
+      if (map[y][x] === 3) pacman = { x, y };  
+      if (map[y][x] === 4) ghostList.push({ x, y });  
+    }  
+  }  
+}  
+  
+function drawMap() {  
+  ctx.clearRect(0, 0, canvas.width, canvas.height);  
+  for (let y = 0; y < map.length; y++) {  
+    for (let x = 0; x < map[y].length; x++) {  
+      let tile = map[y][x];  
+      let isGhost = ghostList.some(g => g.x === x && g.y === y);  
+      ctx.fillStyle = tile === 1 ? "#0000cc" : "#000";  
+      ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);  
+      if (tile === 0) {  
+        ctx.fillStyle = "#fff";  
+        ctx.beginPath();  
+        ctx.arc(x * tileSize + 16, y * tileSize + 16, 4, 0, Math.PI * 2);  
+        ctx.fill();  
+      }  
+      if (isGhost) {  
+        ctx.fillStyle = "#ff0000";  
+        ctx.beginPath();  
+        ctx.arc(x * tileSize + 16, y * tileSize + 16, 12, 0, Math.PI * 2);  
+        ctx.fill();  
+      }  
+    }  
+  }  
+  ctx.fillStyle = "#ffff00";  
+  ctx.beginPath();  
+  ctx.arc(pacman.x * tileSize + 16, pacman.y * tileSize + 16, 12, 0, Math.PI * 2);  
+  ctx.fill();  
+}  
+  
+function movePacman() {  
+  const newX = pacman.x + direction.x;  
+  const newY = pacman.y + direction.y;  
+  if (map[newY]?.[newX] !== 1) {  
+    if (map[newY][newX] === 0) score += 10;  
+    map[pacman.y][pacman.x] = 2;  
+    pacman.x = newX;  
+    pacman.y = newY;  
+  }  
+}  
+ 
+function moveGhosts() {
+  for (let ghost of ghostList) {
+    const dx = pacman.x - ghost.x;
+    const dy = pacman.y - ghost.y;
+    let moveX = dx !== 0 ? dx / Math.abs(dx) : 0;
+    let moveY = dy !== 0 ? dy / Math.abs(dy) : 0;
+
+    // Prioritaskan gerak horizontal atau vertikal (acak)
+    if (Math.random() > 0.5 && map[ghost.y + moveY]?.[ghost.x] !== 1) {
+      ghost.y += moveY;
+    } else if (map[ghost.y]?.[ghost.x + moveX] !== 1) {
+      ghost.x += moveX;
+    }
+
+    // Cek tabrakan
+    if (ghost.x === pacman.x && ghost.y === pacman.y) {
+      lives--;
+      document.getElementById("lives").innerText = lives;
+      if (lives <= 0) {
+  document.getElementById("gameOverText").style.display = "block"; // Tampilkan tulisan Game Over
+  setTimeout(() => location.reload(), 2000); // Reset setelah 2 detik
+} else {
+  findEntities(); // Reset posisi jika masih ada nyawa
+}
+      }
+    }
+  }
+
+  
+function gameLoop() {  
+  movePacman();  
+  drawMap();  
+  document.getElementById("score").innerText = score;  
+  requestAnimationFrame(gameLoop);  
+}  
+  
+// Gerakkan ghost tiap 500ms  
+setInterval(moveGhosts, 400);  
+  
+document.addEventListener("keydown", e => {  
+  if (e.key === "ArrowUp") direction = { x: 0, y: -1 };  
+  if (e.key === "ArrowDown") direction = { x: 0, y: 1 };  
+  if (e.key === "ArrowLeft") direction = { x: -1, y: 0 };  
+  if (e.key === "ArrowRight") direction = { x: 1, y: 0 };  
+});  
+  
+document.getElementById("mapSelect").addEventListener("change", e => {  
+  currentMap = +e.target.value;  
+  map = JSON.parse(JSON.stringify(mapList[currentMap]));  
+  score = 0;  
+  lives = 3;  
+  direction = { x: 0, y: 0 };  
+  document.getElementById("score").innerText = score;  
+  document.getElementById("lives").innerText = lives;  
+  findEntities();  
+});  
+  
+findEntities();  
+drawMap();  
+gameLoop();  
+let pacmanSpeed = 410;  // Kecepatan Pac-Man dalam milidetik (semakin tinggi, semakin lambat)  
+  
+// Fungsi untuk gerakan Pac-Man  
+function gameLoop() {  
+  movePacman();  
+  drawMap();  
+  document.getElementById("score").innerText = score;  
+}  
+  
+// Panggil gameLoop dengan interval tertentu (misalnya setiap 200ms)  
+setInterval(gameLoop, pacmanSpeed);  
+</script>  </body>  
+</html>
