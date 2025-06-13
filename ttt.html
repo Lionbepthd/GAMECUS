@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Tic Tac Toe</title>
+  <style>
+  #loadingScreen {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    color: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2em;
+    z-index: 9999;
+  }
+  #mainContent {
+    display: none;
+  }
+</style>
+
+<div id="loadingScreen">Loading...</div>
+
+<div id="mainContent">
+  <!-- Konten utama game kamu di sini -->
+</div>
+
+<script>
+  setTimeout(function() {
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('mainContent').style.display = 'block';
+  }, 5000);
+</script>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+
+    table {
+      border-collapse: collapse;
+      margin: 40px auto;
+    }
+
+    td {
+      width: 120px;
+      height: 120px;
+      font-size: 60px;
+      text-align: center;
+      border: 3px solid black;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    td.win {
+      background: gold;
+      animation: kedip 1s infinite;
+    }
+
+    @keyframes kedip {
+      0%, 100% { background-color: gold; }
+      50% { background-color: orange; }
+    }
+
+    h1 {
+      font-size: 50px;
+      margin-top: 20px;
+    }
+
+    #pesan {
+      font-size: 40px;
+      margin: 20px 0 10px;
+    }
+
+    #countdown {
+      font-size: 30px;
+      color: gray;
+      margin-bottom: 20px;
+    }
+
+    button {
+      font-size: 32px;
+      padding: 15px 25px;
+      margin: 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Tic Tac Toe</h1>
+  <table>
+    <tr><td onclick="ttt(0)"></td><td onclick="ttt(1)"></td><td onclick="ttt(2)"></td></tr>
+    <tr><td onclick="ttt(3)"></td><td onclick="ttt(4)"></td><td onclick="ttt(5)"></td></tr>
+    <tr><td onclick="ttt(6)"></td><td onclick="ttt(7)"></td><td onclick="ttt(8)"></td></tr>
+  </table>
+
+  <p id="pesan"></p>
+  <p id="countdown"></p>
+
+  <button onclick="reset()">Reset</button>
+  <button onclick="location.href='index.html'">Kembali</button>
+
+  <audio id="suaraKlik" src="click.mp3"></audio>
+  <audio id="suaraMenang" src="win.mp3"></audio>
+
+  <script>
+    let papan = ["", "", "", "", "", "", "", "", ""];
+    let giliran = "X";
+    let gameSelesai = false;
+    let timer = null;
+
+    function ttt(i) {
+      mainkanKlik();
+      if (papan[i] === "" && !gameSelesai) {
+        papan[i] = giliran;
+        render();
+        let pemenang = menang();
+        if (pemenang) {
+          document.getElementById("pesan").textContent = giliran + " menang!";
+          pemenang.forEach(index => {
+            document.querySelectorAll("td")[index].classList.add("win");
+          });
+          gameSelesai = true;
+          document.getElementById("suaraMenang").play();
+          mulaiCountdown();
+        } else if (papan.every(cell => cell !== "")) {
+          document.getElementById("pesan").textContent = "Seri!";
+          gameSelesai = true;
+          mulaiCountdown();
+        } else {
+          giliran = giliran === "X" ? "O" : "X";
+        }
+      }
+    }
+
+    function render() {
+      document.querySelectorAll("td").forEach((td, i) => {
+        td.textContent = papan[i];
+        td.classList.remove("win");
+      });
+    }
+
+    function menang() {
+      const win = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+      for (let combo of win) {
+        if (papan[combo[0]] && papan[combo[0]] === papan[combo[1]] && papan[combo[0]] === papan[combo[2]]) {
+          return combo;
+        }
+      }
+      return null;
+    }
+
+    function reset() {
+      papan = ["", "", "", "", "", "", "", "", ""];
+      giliran = "X";
+      gameSelesai = false;
+      render();
+      document.getElementById("pesan").textContent = "";
+      document.getElementById("countdown").textContent = "";
+      if (timer) clearInterval(timer);
+    }
+
+    function mainkanKlik() {
+      let audio = document.getElementById("suaraKlik");
+      if (audio) {
+        audio.currentTime = 0;
+        audio.play();
+      }
+    }
+
+    function mulaiCountdown() {
+      let detik = 5;
+      const countdownEl = document.getElementById("countdown");
+      if (timer) clearInterval(timer);
+      countdownEl.textContent = "Reset otomatis dalam " + detik + " detik...";
+      timer = setInterval(() => {
+        detik--;
+        if (detik > 0) {
+          countdownEl.textContent = "Reset otomatis dalam " + detik + " detik...";
+        } else {
+          clearInterval(timer);
+          countdownEl.textContent = "";
+          reset();
+        }
+      }, 1000);
+    }
+
+    render();
+
+    document.querySelectorAll("button").forEach(btn => {
+      btn.addEventListener("click", mainkanKlik);
+    });
+  </script>
+</body>
+</html>

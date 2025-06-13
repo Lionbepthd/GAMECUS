@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Menu Utama</title>
+  <script>
+    const localVersion = "1.4";
+
+    fetch("https://gist.githubusercontent.com/Lionbepthd/053d32c10c1ad00223e8036aa4c91d4e/raw/version.json")
+      .then(response => response.json())
+      .then(data => {
+        const latestVersion = data.latestVersion;
+        const changelog = data.changelog;
+        if (latestVersion !== localVersion) {
+          setTimeout(() => {
+            alert(`Update v${latestVersion} \n\n${changelog}`);
+          }, 1000);
+        }
+      })
+      .catch(error => {
+        console.warn("Gagal memeriksa update online:", error);
+      });
+  </script>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      background: url('https://i.imgur.com/KGViiSo.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: white;
+      text-align: center;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .rain {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 9998;
+    }
+
+    .drop {
+      position: absolute;
+      background-color: rgba(255, 255, 255, 0.4);
+      width: 2px;
+      height: 10px;
+      animation: fall 0.5s infinite linear;
+    }
+
+    @keyframes fall {
+      0% { transform: translateY(-90%); }
+      100% { transform: translateY(100vh); }
+    }
+
+    #loadingScreen {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      background: #fff;
+      color: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 2em;
+      z-index: 9999;
+    }
+
+    #mainContent {
+      display: none;
+      z-index: 1;
+    }
+
+    .menu-toggle {
+      font-size: 30px;
+      cursor: pointer;
+      user-select: none;
+      padding: 15px;
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 10000;
+      color: white;
+    }
+
+    .menu {
+      display: none;
+      background-color: rgba(255, 255, 255, 0.9);
+      padding: 10px;
+      border: 1px solid #ccc;
+      position: absolute;
+      top: 50px;
+      left: 10px;
+      width: 200px;
+      z-index: 10000;
+    }
+
+    .menu a {
+      display: block;
+      padding: 8px;
+      text-decoration: none;
+      color: #000;
+    }
+
+    .menu a:hover {
+      background-color: #ddd;
+    }
+
+    button {
+      font-size: 20px;
+      padding: 10px;
+      margin: 10px;
+      background-color: #00bcd4;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0097a7;
+    }
+
+    footer {
+      margin-top: 20px;
+      font-size: 14px;
+      color: gray;
+    }
+  </style>
+  <script>
+    function toggleMenu() {
+      var menu = document.getElementById("menuBox");
+      menu.style.display = (menu.style.display === "block") ? "none" : "block";
+    }
+
+    function createRain() {
+      const rain = document.querySelector('.rain');
+      for (let i = 0; i < 100; i++) {
+        const drop = document.createElement('div');
+        drop.classList.add('drop');
+        drop.style.left = `${Math.random() * 100}vw`;
+        drop.style.animationDuration = `${Math.random() * 1 + 0.5}s`;
+        drop.style.animationDelay = `${Math.random() * 2}s`;
+        rain.appendChild(drop);
+      }
+    }
+
+    window.onload = createRain;
+  </script>
+</head>
+<body>
+  <script>
+  function showCategory(category) {
+    document.getElementById('onlineGames').style.display = 'none';
+    document.getElementById('offlineGames').style.display = 'none';
+
+    if (category === 'online') {
+      document.getElementById('onlineGames').style.display = 'block';
+    } else if (category === 'offline') {
+      document.getElementById('offlineGames').style.display = 'block';
+    }
+  }
+</script>
+  <div id="loadingScreen">GameCus Loading...</div>
+
+<div id="mainContent">
+  <h1>Selamat Bermain</h1>
+  <button onclick="showCategory('online')">Game Online</button>
+  <button onclick="showCategory('offline')">Game Online By Lion</button>
+
+  <div id="onlineGames" style="display:none; margin-top:20px;">
+    <button onclick="location.href='https://play.famobi.com/cut-the-rope'">Cut The Rope</button>
+    <button onclick="location.href='https://games.cdn.famobi.com/html5games/w/words-of-wonders/v040/?fg_domain=play.famobi.com&fg_aid=A1000-1&fg_uid=909e737d-670d-4a40-be08-73165d13351d&fg_pid=4638e320-4444-4514-81c4-d80a8c662371&fg_beat=232&original_ref=https%3A%2F%2Ffamobi.com%2F'">Words of Wonders</button>
+    <button onclick="location.href='https://games.cdn.famobi.com/html5games/s/streetrace-fury/v360/?fg_domain=play.famobi.com&fg_aid=A1000-1&fg_uid=c124e0c0-7312-4f81-bdf0-ab1dbcc47ed4&fg_pid=4638e320-4444-4514-81c4-d80a8c662371&fg_beat=231&original_ref=https%3A%2F%2Ffamobi.com%2F'">StreetRace Fury</button>
+    <button onclick="location.href='https://games.cdn.famobi.com/html5games/g/guess-their-answer/v040/?fg_domain=play.famobi.com&fg_aid=A1000-1&fg_uid=e4bc01d5-3b0b-439e-80d5-0b4ac3897ac8&fg_pid=4638e320-4444-4514-81c4-d80a8c662371&fg_beat=237&original_ref=https%3A%2F%2Ffamobi.com%2F'">Guess Their Answer</button>
+    <button onclick="location.href='https://games.cdn.famobi.com/html5games/g/geo-quiz-europe/v080/?fg_domain=play.famobi.com&fg_aid=A1000-1&fg_uid=46693c28-fd3f-4bdf-85ee-f6b29bce4f6e&fg_pid=4638e320-4444-4514-81c4-d80a8c662371&fg_beat=237&original_ref=https%3A%2F%2Ffamobi.com%2F'">Geo Quiz Europe</button>
+    <button onclick="location.href='https://defly.io/indexFamobi.html?fg_domain=play.famobi.com&fg_aid=A1000-1&fg_uid=da7010c7-6f03-460c-891d-8737c569603f&fg_pid=4638e320-4444-4514-81c4-d80a8c662371&fg_beat=238&original_ref=https%3A%2F%2Ffamobi.com%2F'">Defly.io</button>
+    <button onclick="location.href='https://games.cdn.famobi.com/html5games/c/crazy-freekick/5-a4879b/?fg_domain=play.famobi.com&fg_aid=A1000-1&fg_uid=82d292dd-087e-4d67-85b9-8d87112174f0&fg_pid=4638e320-4444-4514-81c4-d80a8c662371&fg_beat=239&original_ref=https%3A%2F%2Ffamobi.com%2F'">Crazy Freekick</button>
+    <button onclick="location.href='https://games.cdn.famobi.com/html5games/s/speed-master/v010/?fg_domain=play.famobi.com&fg_aid=A1000-1&fg_uid=465328fb-72c3-4685-b5a3-bc43350bb765&fg_pid=4638e320-4444-4514-81c4-d80a8c662371&fg_beat=241&original_ref=https%3A%2F%2Ffamobi.com%2F'">Speed Master</button>
+    <button onclick="location.href='https://games.cdn.famobi.com/html5games/o/om-nom-run/v1240/?fg_domain=play.famobi.com&fg_aid=A1000-1&fg_uid=abe80572-560a-444d-baf7-2fa4a7b2c02f&fg_pid=4638e320-4444-4514-81c4-d80a8c662371&fg_beat=231&original_ref=https%3A%2F%2Ffamobi.com%2F'">Om Nom Run</button>
+    <!-- Tambahkan link game online lainnya -->
+  </div>
+
+  <div id="offlineGames" style="display:none; margin-top:20px;">
+    <button onclick="location.href='pacman.html'">Pac-Man</button>
+    <button onclick="location.href='ttt.html'">Tic-Tac-Toe</button>
+    <button onclick="location.href='ulartanggag.html'">Ular Tangga</button>
+    <button onclick="location.href='catur.html'">Catur 1vs1</button>
+  </div>
+</div>
+
+  <div class="rain"></div>
+
+  <script>
+    setTimeout(function() {
+      document.getElementById('loadingScreen').style.display = 'none';
+      document.getElementById('mainContent').style.display = 'block';
+    }, 5000);
+  </script>
+
+  <div class="menu-toggle" onclick="toggleMenu()">☰</div>
+  <div class="menu" id="menuBox">
+    <a href="https://gamecusid.taplink.id">Contact Service</a>
+    <a href="https://github.com/Lionbepthd/GAMECUS/releases/latest">Cek Update</a>
+  </div>
+</body>
+</html>

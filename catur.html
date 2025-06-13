@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catur 1v1</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+      background-color: #f0f0f0;
+    }
+    #loadingScreen {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      background: #fff;
+      color: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 2em;
+      z-index: 9999;
+    }
+    #mainContent {
+      display: none;
+    }
+    .chessboard {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      aspect-ratio: 1;
+      max-width: 95vmin;
+      margin: 10px auto;
+      border: 2px solid black;
+    }
+    .cell {
+      aspect-ratio: 1;
+      width: 100%;
+      font-size: 4vmin;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+    }
+    .selected {
+      background-color: yellow;
+    }
+    button {
+      font-size: 16px;
+      margin: 5px;
+      padding: 8px 16px;
+    }
+    #info, #score {
+      font-size: 18px;
+      margin: 5px;
+    }
+    #backButton {
+      position: fixed;
+      bottom: 5px;
+      left: 5px;
+      z-index: 1000;
+      padding: 10px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <button id="backButton" onclick="location.href='index.html'">Back to Menu</button>
+  <div id="loadingScreen">Loading...</div>
+  <div id="mainContent">
+    <h1>Catur 1v1</h1>
+    <div id="info">Giliran: Putih</div>
+    <div id="score">Skor - Putih: 0 | Hitam: 0</div>
+    <button onclick="resetScore()">Reset Skor</button>
+    <div id="board" class="chessboard"></div>
+  </div>
+  <script>
+    setTimeout(function() {
+      document.getElementById('loadingScreen').style.display = 'none';
+      document.getElementById('mainContent').style.display = 'block';
+    }, 500);
+
+    const board = document.getElementById("board");
+    const info = document.getElementById("info");
+    const scoreDiv = document.getElementById("score");
+
+    let boardState = [];
+    let selected = null;
+    let turn = "white";
+    let scores = {
+      white: parseInt(localStorage.getItem("score_white") || "0"),
+      black: parseInt(localStorage.getItem("score_black") || "0"),
+    };
+
+    const initial = [
+      ["♜","♞","♝","♛","♚","♝","♞","♜"],
+      ["♟","♟","♟","♟","♟","♟","♟","♟"],
+      ["","","","","","","",""],
+      ["","","","","","","",""],
+      ["","","","","","","",""],
+      ["","","","","","","",""],
+      ["♙","♙","♙","♙","♙","♙","♙","♙"],
+      ["♖","♘","♗","♕","♔","♗","♘","♖"]
+    ];
+
+    function isWhite(p) { return "♙♖♘♗♕♔".includes(p); }
+    function isBlack(p) { return "♟♜♞♝♛♚".includes(p); }
+
+    function renderBoard() {
+      board.innerHTML = "";
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          const cell = document.createElement("div");
+          cell.className = "cell";
+          cell.textContent = boardState[r][c];
+          if (selected && selected.r === r && selected.c === c)
+            cell.classList.add("selected");
+          cell.onclick = () => handleClick(r, c);
+          board.appendChild(cell);
+        }
+      }
+      info.textContent = "Giliran: " + (turn === "white" ? "Putih" : "Hitam");
+      scoreDiv.textContent = `Skor - Putih: ${scores.white} | Hitam: ${scores.black}`;
+    }
+
+    function handleClick(r, c) {
+      const piece = boardState[r][c];
+      if (selected) {
+        if (tryMove(selected.r, selected.c, r, c)) {
+          selected = null;
+          checkGameStatus();
+          turn = (turn === "white") ? "black" : "white";
+        } else {
+          selected = null;
+        }
+        renderBoard();
+      } else if (piece && ((turn === "white" && isWhite(piece)) || (turn === "black" && isBlack(piece)))) {
+        selected = {r, c};
+        renderBoard();
+      }
+    }
+
+    function tryMove(fr, fc, tr, tc) {
+  const piece = boardState[fr][fc];
+  const target = boardState[tr][tc];
+  const dr = tr - fr;
+  const dc = tc - fc;
+  const absDr = Math.abs(dr);
+  const absDc = Math.abs(dc);
+  let valid = false;
+
+  if (piece === "♙") {
+    if (fc === tc && boardState[tr][tc] === "") {
+      if (dr === -1) valid = true;
+      else if (fr === 6 && dr === -2 && boardState[fr - 1][fc] === "") valid = true;
+    } else if (absDc === 1 && dr === -1 && target !== "" && isBlack(target)) {
+      valid = true;
+    }
+  } else if (piece === "♟") {
+    if (fc === tc && boardState[tr][tc] === "") {
+      if (dr === 1) valid = true;
+      else if (fr === 1 && dr === 2 && boardState[fr + 1][fc] === "") valid = true;
+    } else if (absDc === 1 && dr === 1 && target !== "" && isWhite(target)) {
+      valid = true;
+    }
+  } else {
+    if (piece === "♖" || piece === "♜") {
+      if (fr === tr || fc === tc) valid = isClear(fr, fc, tr, tc);
+    } else if (piece === "♗" || piece === "♝") {
+      if (absDr === absDc) valid = isClear(fr, fc, tr, tc);
+    } else if (piece === "♕" || piece === "♛") {
+      if (fr === tr || fc === tc || absDr === absDc) valid = isClear(fr, fc, tr, tc);
+    } else if (piece === "♘" || piece === "♞") {
+      if ((absDr === 2 && absDc === 1) || (absDr === 1 && absDc === 2)) valid = true;
+    } else if (piece === "♔" || piece === "♚") {
+      if (absDr <= 1 && absDc <= 1) valid = true;
+    }
+  }
+
+  if (valid) {
+    boardState[tr][tc] = piece;
+    boardState[fr][fc] = "";
+    handlePromotion(tr, tc);
+    return true;
+  }
+  return false;
+}
+
+    function isClear(fr, fc, tr, tc) {
+      const stepR = Math.sign(tr - fr);
+      const stepC = Math.sign(tc - fc);
+      let r = fr + stepR;
+      let c = fc + stepC;
+      while (r !== tr || c !== tc) {
+        if (boardState[r][c] !== "") return false;
+        r += stepR;
+        c += stepC;
+      }
+      return true;
+    }
+
+    function handlePromotion(r, c) {
+      const piece = boardState[r][c];
+      if ((piece === "♙" && r === 0) || (piece === "♟" && r === 7)) {
+        const isWhiteP = piece === "♙";
+        const options = isWhiteP ? ["♕","♖","♗","♘"] : ["♛","♜","♝","♞"];
+        const choice = prompt("Promosi ke? (q = ratu, r = benteng, b = gajah, n = kuda)").toLowerCase();
+        const map = {q:0, r:1, b:2, n:3};
+        boardState[r][c] = options[map[choice] ?? 0];
+      }
+    }
+
+    function checkGameStatus() {
+      const flat = boardState.flat();
+      const hasWhiteKing = flat.includes("♔");
+      const hasBlackKing = flat.includes("♚");
+
+      if (!hasWhiteKing) {
+        alert("Hitam menang!");
+        scores.black++;
+        saveScores();
+        resetBoard();
+      } else if (!hasBlackKing) {
+        alert("Putih menang!");
+        scores.white++;
+        saveScores();
+        resetBoard();
+      }
+    }
+
+    function saveScores() {
+      localStorage.setItem("score_white", scores.white);
+      localStorage.setItem("score_black", scores.black);
+    }
+
+    function resetBoard() {
+      boardState = JSON.parse(JSON.stringify(initial));
+      selected = null;
+      turn = "white";
+      renderBoard();
+    }
+
+    function resetScore() {
+      scores.white = 0;
+      scores.black = 0;
+      saveScores();
+      renderBoard();
+    }
+
+    resetBoard();
+  </script>
+</body>
+</html>
