@@ -161,11 +161,14 @@
   function showCategory(category) {
     document.getElementById('onlineGames').style.display = 'none';
     document.getElementById('offlineGames').style.display = 'none';
+    document.getElementById('multiplayerGames').style.display = 'none';
 
     if (category === 'online') {
       document.getElementById('onlineGames').style.display = 'block';
     } else if (category === 'offline') {
       document.getElementById('offlineGames').style.display = 'block';
+    } else if (category === 'multiplayer') {
+      document.getElementById('multiplayerGames').style.display = 'block';
     }
   }
 </script>
@@ -175,6 +178,7 @@
   <h1>Selamat Bermain</h1>
   <button onclick="showCategory('online')">Game Online</button>
   <button onclick="showCategory('offline')">Game Online By Lion</button>
+  <button onclick="showCategory('multiplayer')">Game Multiplayer By Lion</button>
 
   <div id="onlineGames" style="display:none; margin-top:20px;">
     <button onclick="location.href='https://play.famobi.com/cut-the-rope'">Cut The Rope</button>
@@ -194,6 +198,10 @@
     <button onclick="location.href='ttt.html'">Tic-Tac-Toe</button>
     <button onclick="location.href='ulartanggag.html'">Ular Tangga</button>
     <button onclick="location.href='catur.html'">Catur 1vs1</button>
+  </div>
+
+  <div id="multiplayerGames" style="display:none; margin-top:20px;">
+    <button onclick="location.href='https://accidental-relieved-leptoceratops.glitch.me'">ular tangga multiplayer</button>
   </div>
 </div>
 
